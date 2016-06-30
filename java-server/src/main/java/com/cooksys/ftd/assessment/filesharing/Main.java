@@ -1,18 +1,27 @@
 package com.cooksys.ftd.assessment.filesharing;
 
+import java.io.StringReader;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
+
+import org.eclipse.persistence.jaxb.JAXBContextFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.cooksys.ftd.assessment.filesharing.dao.FilesDao;
 import com.cooksys.ftd.assessment.filesharing.dao.UserDao;
+import com.cooksys.ftd.assessment.filesharing.db.User;
 import com.cooksys.ftd.assessment.filesharing.server.Server;
 
 public class Main {
@@ -24,14 +33,17 @@ public class Main {
 
 	private static int port = 667;
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws ClassNotFoundException, JAXBException {
+		
+		
 		log.debug("Program started. Attempting to connect to SQL");
 
 		ExecutorService executor = Executors.newCachedThreadPool();
 
 		try (Connection conn = DriverManager.getConnection(url, username, pass)) {
 			log.debug("SQL connection successful");
-			
+
+			Class.forName(driver);
 			Server server = new Server();
 			server.setPort(port);
 			server.setExecutor(executor);
@@ -43,8 +55,8 @@ public class Main {
 			FilesDao filesDao = new FilesDao();
 			filesDao.setConn(conn);
 			server.setFilesDao(filesDao);
-			
-			Future<?> serverFuture = executor.submit(server); 
+
+			Future<?> serverFuture = executor.submit(server);
 			serverFuture.get();
 
 		} catch (SQLException | InterruptedException | ExecutionException e) {
