@@ -3,9 +3,17 @@ package com.cooksys.ftd.assessment.filesharing;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.cooksys.ftd.assessment.filesharing.dao.FilesDao;
+import com.cooksys.ftd.assessment.filesharing.dao.UserDao;
+import com.cooksys.ftd.assessment.filesharing.server.Server;
 
 public class Main {
 	private static Logger log = LoggerFactory.getLogger(Main.class);
@@ -14,11 +22,35 @@ public class Main {
 	private static String username = "root";
 	private static String pass = "bondstone";
 
-	public static void main(String[] args) throws SQLException {
+	private static int port = 667;
+
+	public static void main(String[] args) {
 		log.debug("Program started. Attempting to connect to SQL");
-		
+
+		ExecutorService executor = Executors.newCachedThreadPool();
+
 		try (Connection conn = DriverManager.getConnection(url, username, pass)) {
-			log.debug("Connection successful");
+			log.debug("SQL connection successful");
+			
+			Server server = new Server();
+			server.setPort(port);
+			server.setExecutor(executor);
+
+			UserDao userDao = new UserDao();
+			userDao.setConn(conn);
+			server.setUserDao(userDao);
+
+			FilesDao filesDao = new FilesDao();
+			filesDao.setConn(conn);
+			server.setFilesDao(filesDao);
+			
+			Future<?> serverFuture = executor.submit(server); 
+			serverFuture.get();
+
+		} catch (SQLException | InterruptedException | ExecutionException e) {
+			log.error("We have encountered an error trying to start the server. {}", e);
+		} finally {
+			executor.shutdown();
 		}
 	}
 
