@@ -1,12 +1,9 @@
 import vorpal from 'vorpal'
-
-import { hash, compare } from './lib/hash'
-import { createUser } from './model/user'
-import { registerUser, loginUser, downloadFile, sendFile, fileList } from './lib/connect.js'
+import { testConnection, registerUser, loginUser, downloadFile, sendFile, fileList } from './lib/connect.js'
 
 const cli = vorpal()
 
-let loggedin = false // when not logged in, it will be false, when logged in it will take on the username
+let loggedin = 'testingfornow' // when not logged in, it will be false, when logged in it will take on the username
 
 /*
   Command: Login
@@ -16,6 +13,16 @@ let loggedin = false // when not logged in, it will be false, when logged in it 
 cli
   .command('login <username> <password>')
   .description('Logs you in')
+  .action((args, callback) => {
+    loginUser(args.username, args.password)
+    // if (loginUser(args.username, args.password) === 0) {
+    //   loggedin = args.username
+    //   cli.log(`You have now logged in as ${loggedin}`)
+    // } else {
+    //   cli.log('Something went wrong try again')
+    // }
+    callback()
+  })
 
 /*
   Command: Logout
@@ -56,6 +63,10 @@ cli
 cli
   .command('register <username> <password>')
   .description('Register your user to our database')
+  .action((args, callback) => {
+    registerUser(args.username,args.password)
+    callback()
+  })
 
 /*
   Command: download
@@ -82,5 +93,9 @@ cli
 cli
   .command('files')
   .description('Retrieve list of files')
+  .action((args, callback) => {
+    fileList(loggedin)
+    callback()
+  })
 
 export default cli
