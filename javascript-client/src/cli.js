@@ -1,33 +1,49 @@
 import vorpal from 'vorpal'
-import { testConnection, registerUser, loginUser, downloadFile, sendFile, fileList } from './lib/connect.js'
+import net from 'net'
+import createUser from './model/user'
 
 const cli = vorpal()
 
-let loggedin = 'testingfornow' // when not logged in, it will be false, when logged in it will take on the username
+let loggedin = false // when not logged in, it will be false, when logged in it will take on the username
 
-/*
-  Command: Login
-  Params: <username> <password>
-  Function: Logs the user in, uses loginUser from lib/connect
-*/
+let server
+const port = 667
+const host = 'localhost'
+
+const connectToServer = () => {
+  server = net.createConnection(port, host, () => {
+    return 0
+  })
+}
+
+const closeConnection = () => {
+  server.end()
+}
+
+const writeTo = (string) => server.write(string + '\n')
+
+const writeJSONUser = (object) => {
+  server.write(JSON.stringify({ 'user': object }) + '\n')
+}
+
 cli
   .command('login <username> <password>')
   .description('Logs you in')
   .action((args, callback) => {
-    loginUser(args.username, args.password)
-    // if (loginUser(args.username, args.password) === 0) {
-    //   loggedin = args.username
-    //   cli.log(`You have now logged in as ${loggedin}`)
-    // } else {
-    //   cli.log('Something went wrong try again')
-    // }
+    connectToServer()
+    writeTo(`passhashget ${args.username}`)
+    server.on('data', (d) => {
+      if (d.toString().localeCompare(args.password) === 0) {
+        loggedin = args.username
+        cli.log(`You have now logged in as ${loggedin}`)
+      } else {
+        cli.log('Something went wrong logging in :(')
+      }
+    })
+    closeConnection()
     callback()
   })
 
-/*
-  Command: Logout
-  Function: Logs the user out, if you are logged in
-*/
 cli
   .command('logout')
   .description('Logs you out, if you are logged in')
@@ -39,62 +55,46 @@ cli
     }
   })
 
-/*
-  Command: amiloggedin
-  Function: Tells if you are logged in and what user you are logged in as
-*/
-
 cli
   .command('amiloggedin')
   .description('Tells if you are logged in and what user you are logged in as')
-  .action(() => {
+  .action((args,callback) => {
     if (!loggedin) {
       cli.log('You are not logged in. Please register or log in.')
     } else {
       cli.log(`You are logged in as ${loggedin}! If you would like to log out, type in logout`)
     }
+    callback()
   })
 
-/*
-  Command: register
-  Params: <username> <password>
-  Function: Creates a User object, which is then passed into registerUser in lib/connect
-*/
 cli
   .command('register <username> <password>')
   .description('Register your user to our database')
   .action((args, callback) => {
-    registerUser(args.username,args.password)
+    connectToServer()
+    writeJSONUser(createUser(args.username, args.password))
+    closeConnection()
     callback()
   })
 
-/*
-  Command: download
-  Params: <fileid> [filepath]
-  Function: Downloads a file to the path specified by the database, or to another path if one is specified
-*/
 cli
   .command('download <fileid> [filepath]')
   .description('Downloads a file from your database')
 
-/*
-  Command: upload
-  Params: <filepath> [filepath]
-  Function: Encrypts file, and saves it to the database
-*/
 cli
   .command('upload <filepath> [filepath]')
   .description('Upload a file to you')
 
-/*
-  Command: files
-  Function: Gets a list of files for the user
-*/
 cli
   .command('files')
   .description('Retrieve list of files')
   .action((args, callback) => {
-    fileList(loggedin)
+    connectToServer()
+    writeTo(`getlist ${loggedin}`)
+    server.on('data', (d) => {
+      cli.log(d.toString())
+    })
+    closeConnection()
     callback()
   })
 
