@@ -1,6 +1,11 @@
 import vorpal from 'vorpal'
 import net from 'net'
 import createUser from './model/user'
+import bcrypt from 'bcryptjs'
+
+const compareHash = (password, hash) => {
+  return bcrypt.compareSync(password, hash)
+}
 
 const cli = vorpal()
 
@@ -33,7 +38,7 @@ cli
     connectToServer()
     writeTo(`passhashget ${args.username}`)
     server.on('data', (d) => {
-      if (d.toString().localeCompare(args.password) === 0) {
+      if (compareHash(args.password, d.toString())) {
         loggedin = args.username
         cli.log(`You have now logged in as ${loggedin}`)
       } else {
@@ -58,7 +63,7 @@ cli
 cli
   .command('amiloggedin')
   .description('Tells if you are logged in and what user you are logged in as')
-  .action((args,callback) => {
+  .action((args, callback) => {
     if (!loggedin) {
       cli.log('You are not logged in. Please register or log in.')
     } else {

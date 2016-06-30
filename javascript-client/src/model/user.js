@@ -1,9 +1,9 @@
-//import { hash } from './hash'
+import { hash } from '../lib/hash'
 
-const createUser = (username, passhash) => {
+const createUser = (username, password) => {
   return {
     'username': username,
-    'passhash': passhash
+    'passhash': hash(password)
   }
 }
 

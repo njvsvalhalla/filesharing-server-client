@@ -1,0 +1,11 @@
+Implement promises in the cli and hashes w/ promises
+
+Implement file upload and download
+
+Why is compareHash not working if called from hash.js but works fine if function is in cli.js?
+
+
+******Organize******
+CLI
+ClientHandler
+
