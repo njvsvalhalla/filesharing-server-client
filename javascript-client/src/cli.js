@@ -14,6 +14,8 @@ const cli = vorpal()
 let loggedin = 'neald' // when not logged in, it will be false, when logged in it will take on the username
 
 let server
+
+let buffer
 const port = 667
 const host = 'localhost'
 
@@ -100,22 +102,19 @@ cli
       let parsed = JSON.parse((d.toString()))
       let filePathToSave = parsed.files.filePath
       let buffer = Buffer.from(parsed.files.buffer, 'base64')
-      fs.open(filePathToSave, 'w', function(err, fd) {
-          if (err) {
-              throw 'error opening file: ' + err;
-          }
-
-          fs.write(fd, buffer, 0, buffer.length, null, function(err) {
-              if (err) throw 'error writing file: ' + err;
-              fs.close(fd, function() {
-                  console.log('file written');
-              })
-          });
-      });
-    closeConnection()
-    callback()
+      fs.open(filePathToSave, 'w', (err, fd) => {
+        if (err) cli.log(`Error opening file to write file: ${err}`)
+        fs.write(fd, buffer, 0, buffer.length, null, (err) => {
+          if (err) cli.log(`Error writing to file: ${err}`)
+          fs.close(fd, () => {
+            cli.log(`File written to ${filePathToSave}!`)
+          })
+        })
+      })
+      closeConnection()
+      callback()
+    })
   })
-})
 cli
   .command('upload <absolutefilepath> [pathfordatabase]')
   .description('Upload a file to you')
@@ -126,7 +125,7 @@ cli
         console.log(status.message)
         return
       }
-     let buffer = new Buffer.alloc(fs.statSync(args.absolutefilepath).size)
+      buffer = new Buffer.alloc(fs.statSync(args.absolutefilepath).size)
       fs.read(fd, buffer, 0, buffer.length, 0, function (err, num) {
         console.log(buffer.toString('base64'))
         writeJSONFile(createFile(args.absolutefilepath, buffer.toString('base64'), loggedin))
