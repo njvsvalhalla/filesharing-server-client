@@ -1,3 +1,11 @@
+/**
+ * FilesDao.java
+ * 
+ * Data access object for the Files table
+ * 
+ * 
+ */
+
 package com.cooksys.ftd.assessment.filesharing.dao;
 
 import java.sql.PreparedStatement;
@@ -14,7 +22,16 @@ public class FilesDao extends AbstractDao {
 	PreparedStatement stmt;
 	int id;
 
+	/**
+	 * registerFile: Takes a Files object and from that, registers it with the
+	 * database + converts the base64 string to a byte array, which is stored in
+	 * the blob
+	 * 
+	 * @param Files object
+	 * @throws SQLException
+	 */
 	public void registerFile(Files file) throws SQLException {
+		// Retrieves our userId to store properly
 		String sql = "SELECT userid FROM user WHERE username = ?";
 		stmt = this.getConn().prepareStatement(sql);
 		stmt.setString(1, file.getusername());
@@ -22,17 +39,24 @@ public class FilesDao extends AbstractDao {
 		if (rs.next()) {
 			id = rs.getInt("userid");
 		}
-
+		// Inserts the file into the database
 		sql = "INSERT INTO files (userid, absolute_path, file_data) VALUES (?,?,?)";
 		stmt = this.getConn().prepareStatement(sql);
 		byte[] buffer = Base64.getDecoder().decode(file.getByteArray());
-				//Base64().getDecoder().decode(file.getByteArray());
 		stmt.setInt(1, id);
 		stmt.setString(2, file.getAbsolutePath());
 		stmt.setBytes(3, buffer);
-		int x = stmt.executeUpdate();
-		System.out.println(x);
+		stmt.executeUpdate();
 	}
+
+	/**
+	 * This takes a fileId, gets the path name and file data from the database
+	 * and creates a File object, ready to be sent back to the user
+	 * 
+	 * @param fileId
+	 * @return Files object
+	 * @throws SQLException
+	 */
 
 	public Files sendFile(int fileId) throws SQLException {
 		Files f = new Files();
@@ -49,6 +73,13 @@ public class FilesDao extends AbstractDao {
 		return f;
 	}
 
+	/**
+	 * Returns a list of files registered to a specific username
+	 * 
+	 * @param userName strrng
+	 * @return An array list of an array of Strings
+	 * @throws SQLException
+	 */
 	public ArrayList<String[]> listFiles(String userName) throws SQLException {
 		ArrayList<String[]> files = new ArrayList<String[]>();
 		String sql = "SELECT userid FROM user WHERE username = ?";

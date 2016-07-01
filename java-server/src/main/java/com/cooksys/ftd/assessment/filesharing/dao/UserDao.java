@@ -1,3 +1,10 @@
+/**
+ * UserDao.java
+ * 
+ * Data access object for the Files table
+ * 
+ * 
+ */
 package com.cooksys.ftd.assessment.filesharing.dao;
 
 import java.sql.PreparedStatement;
@@ -10,6 +17,13 @@ public class UserDao extends AbstractDao {
 	String sql;
 	PreparedStatement stmt;
 
+	/**
+	 * registerUser registers a User object into the database
+	 * 
+	 * @param User object
+	 * @return returns the user ID if it was successful, if not -1
+	 * @throws SQLException
+	 */
 	public int registerUser(User user) throws SQLException {
 		sql = "INSERT INTO user (username, password) VALUES (?, ?)";
 		stmt = this.getConn().prepareStatement(sql);
@@ -24,12 +38,17 @@ public class UserDao extends AbstractDao {
 		ResultSet rs = stmt.executeQuery();
 		if (rs.next()) {
 			id = rs.getInt("@@IDENTITY");
-			//user.setUserId(id);
 			return id;
 		}
 		return -1;
 	}
-
+	
+	/**
+	 * passwordHash retrieves the hash from the database, used for authentication
+	 * @param Username string
+	 * @return a password hash
+	 * @throws SQLException
+	 */
 	public String passwordHash(String user) throws SQLException {
 		String sql = "SELECT password FROM user WHERE username = ?";
 		stmt = this.getConn().prepareStatement(sql);

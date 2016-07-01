@@ -12,6 +12,15 @@ import com.cooksys.ftd.assessment.filesharing.db.Files;
 
 public class SendFileToClient {
 
+	/**
+	 * Takes a Files object, f, and marshall's it to a JSON object, and returns
+	 * the string. Used to send a file back to the client.
+	 * 
+	 * @param file object (F)
+	 * @return JSON object as a string
+	 * @throws JAXBException
+	 */
+
 	public static String marshall(Files f) throws JAXBException {
 		Map<String, Object> properties = new HashMap<String, Object>(2);
 		properties.put("eclipselink.media-type", "application/json");

@@ -11,7 +11,13 @@ import javax.xml.bind.Unmarshaller;
 import com.cooksys.ftd.assessment.filesharing.db.User;
 
 public class RegisterUser {
-	
+	/**
+	 * Unmarshall's a JSON string from the client into a User object
+	 * 
+	 * @param String (JSON object sent from the client)
+	 * @return User object
+	 * @throws JAXBException
+	 */
 	public static User unmarshall(String input) throws JAXBException {
 
 		Map<String, Object> properties = new HashMap<String, Object>(2);
