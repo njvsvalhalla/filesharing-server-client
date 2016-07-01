@@ -27,7 +27,12 @@ const connectToServer = () => {
 const closeConnection = () => {
   server.end()
 }
-
+/*
+  The write functions
+  writeTo writes just a string to the socket
+  writeJSONUser sends a JSON object for the user to the server
+  writeJSONFile sends a JSON object for the file to the server
+*/
 const writeTo = (string) => server.write(string + '\n')
 
 const writeJSONUser = (object) => {
@@ -208,8 +213,8 @@ cli
       cli.log('Sorry if you wish to use this command, please try to log in!')
     } else {
       connectToServer()
-      cli.log(`getlist ${loggedin}`)
       writeTo(`getlist ${loggedin}`)
+      cli.log('ID |  Path')
       server.on('data', (d) => {
         cli.log(d.toString())
       })

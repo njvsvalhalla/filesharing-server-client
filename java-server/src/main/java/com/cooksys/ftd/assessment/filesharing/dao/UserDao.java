@@ -22,7 +22,7 @@ public class UserDao extends AbstractDao {
 	 * 
 	 * @param User
 	 *            object
-	 * @return returns the user ID if it was successful, if not -1
+	 * @return returns the user ID if it was successful, if not it will return 0 or 99.
 	 * @throws SQLException
 	 */
 	public int registerUser(User user) throws SQLException {
@@ -32,7 +32,7 @@ public class UserDao extends AbstractDao {
 		stmt.setString(1, user.getUsername());
 		ResultSet rs = stmt.executeQuery();
 		if (rs.next()) {
-			return 1;
+			return 0;
 		} else {
 			sql = "INSERT INTO user (username, password) VALUES (?, ?)";
 			stmt = this.getConn().prepareStatement(sql);

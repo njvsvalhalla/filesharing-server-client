@@ -27,16 +27,16 @@ public class ClientHandler implements Runnable {
 	private FilesDao filesDao;
 
 	private Logger log = LoggerFactory.getLogger(ClientHandler.class);
-
+	private Boolean bool = true;
+	
 	@Override
 	public void run() {
 		log.debug("Started a connection");
-		while (true) {
+		while (bool) {
 			try {
 				String echo = this.reader.readLine();
-				log.debug("input {}", echo);
 				if (echo.startsWith("{\"user\":")) {
-					log.debug("User requesting to register");
+					log.info("User requesting to register");
 					User u = RegisterUser.unmarshall(echo);
 					int reggedUser = userDao.registerUser(u);
 					if (reggedUser == 1) {
@@ -47,7 +47,7 @@ public class ClientHandler implements Runnable {
 					} else {
 						this.writer.write("You successfully registered! You can now log in");
 						this.writer.flush();
-						log.debug("Return register user result: {}", userDao.registerUser(u));
+						log.info("Return register user result: {}", userDao.registerUser(u));
 					}
 				} else if (echo.startsWith("passhashget ")) {
 					String[] a = echo.split(" ");
@@ -87,14 +87,14 @@ public class ClientHandler implements Runnable {
 					}
 				}
 			} catch (IOException e) {
-
-				// log.error("There was an issue with the connection {}", e);
+				bool = false;
+				log.error("There was an issue with the File I/O {}", e);
 			} catch (SQLException e) {
-				// TODO Auto-generated catch block
-				// e.printStackTrace();
+				bool = false;
+				log.error("There was an issue with the SQL commands {}", e);
 			} catch (JAXBException e) {
-				// TODO Auto-generated catch block
-				// e.printStackTrace();
+				bool = false;
+				log.error("There was a JAXB Exception {}", e);
 			}
 		}
 

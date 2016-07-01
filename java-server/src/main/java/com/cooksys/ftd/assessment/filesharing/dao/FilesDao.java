@@ -81,7 +81,14 @@ public class FilesDao extends AbstractDao {
 		}
 		return f;
 	}
-	
+	/**
+	 *  checkOwner checks if the username owns the file at file ID
+	 *  
+	 * @param userName String
+	 * @param fileId int
+	 * @return if > 0, they own it, if 0 they don't
+	 * @throws SQLException
+	 */
 	public int checkOwner(String userName, int fileId) throws SQLException {
 		
 		String sql = "SELECT userid FROM user WHERE username = ?";
