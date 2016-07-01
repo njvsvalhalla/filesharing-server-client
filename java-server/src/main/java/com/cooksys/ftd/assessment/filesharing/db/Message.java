@@ -13,32 +13,39 @@ public class Message {
 	private int userid;
 	@XmlElement(name = "fileid")
 	private int fileid;
-	
-	
+
 	public int getFileid() {
 		return fileid;
 	}
+
 	public void setFileid(int fileid) {
 		this.fileid = fileid;
 	}
+
 	public String getCommand() {
 		return command;
 	}
+
 	public void setCommand(String command) {
 		this.command = command;
 	}
+
 	public String getUsername() {
 		return username;
 	}
+
 	public void setUsername(String username) {
 		this.username = username;
 	}
+
 	public int getUserid() {
 		return userid;
 	}
+
 	public void setUserid(int userid) {
 		this.userid = userid;
 	}
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -48,6 +55,7 @@ public class Message {
 		result = prime * result + ((username == null) ? 0 : username.hashCode());
 		return result;
 	}
+
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
@@ -71,13 +79,14 @@ public class Message {
 			return false;
 		return true;
 	}
+
 	@Override
 	public String toString() {
 		return "Message [command=" + command + ", username=" + username + ", userid=" + userid + "]";
 	}
-	
-	public Message () {
-		
+
+	public Message() {
+
 	}
-	
+
 }
