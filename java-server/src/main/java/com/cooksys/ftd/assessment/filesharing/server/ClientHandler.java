@@ -30,15 +30,13 @@ public class ClientHandler implements Runnable {
 
 	private Logger log = LoggerFactory.getLogger(ClientHandler.class);
 	private Boolean bool = true;
-	
+
 	@Override
 	public void run() {
 		log.debug("Started a connection");
 		while (bool) {
 			try {
 				String echo = this.reader.readLine();
-				Message m = ParseMessage.unmarshall(echo);
-				log.debug("{}", m.getUsername());
 				if (echo.startsWith("{\"user\":")) {
 					log.info("User requesting to register");
 					User u = RegisterUser.unmarshall(echo);
@@ -48,47 +46,57 @@ public class ClientHandler implements Runnable {
 								"Register failed due to a SQL error. If you are having troubles, plese contact the admin");
 						log.info("User registration failed");
 						this.writer.flush();
-					} else {
+					}
+					else {
 						this.writer.write("You successfully registered! You can now log in");
 						this.writer.flush();
 						log.info("Return register user result: {}", userDao.registerUser(u));
 					}
 				}
-				else if (m.getCommand().compareTo("gethash") == 0) {
-					this.writer.write(userDao.passwordHash(m.getUsername()));
-					log.debug("{}", userDao.passwordHash(m.getUsername()));
-					this.writer.flush();
-				} else if (m.getCommand().compareTo("getfiles") == 0) {
-					ArrayList<String[]> files = new ArrayList<String[]>();
-					files = filesDao.listFiles(m.getUsername());
-					for (int i = 0; i < files.size(); i++) {
-						String[] x = files.get(i);
-						this.writer.write(x[0] + " - " + x[1] + "\n");
+				 else if (echo.startsWith("{\"files\":")) {
+						int res = filesDao.registerFile(GetFileFromClient.unmarshall(echo));
+						log.info("User is uploading a file! ");
+						if (res == -1) {
+							log.info("File upload failed.");
+							this.writer.write("Something went wrong registering the file. Please try again later");
+							this.writer.flush();
+						}
+						else {
+							log.info("File successful with the id {}", res);
+							this.writer.write("Your file successfully registered under the following id: " + res + "!");
+							this.writer.flush();
+						}
+				 }
+				else {
+					Message m = ParseMessage.unmarshall(echo);
+					log.debug("{}", m.getUsername());
+
+					if (m.getCommand().compareTo("gethash") == 0) {
+						this.writer.write(userDao.passwordHash(m.getUsername()));
+						log.debug("{}", userDao.passwordHash(m.getUsername()));
 						this.writer.flush();
 					}
-				} else if (echo.startsWith("{\"files\":")) {
-					int res = filesDao.registerFile(GetFileFromClient.unmarshall(echo));
-					log.info("User is uploading a file! ");
-					if (res == -1) {
-						log.info("File upload failed.");
-						this.writer.write("Something went wrong registering the file. Please try again later");
-						this.writer.flush();
-					} else {
-						log.info("File successful with the id {}", res);
-						this.writer.write("Your file successfully registered under the following id: " + res + "!");
-						this.writer.flush();
+					else if (m.getCommand().compareTo("getfiles") == 0) {
+						ArrayList<String[]> files = new ArrayList<String[]>();
+						files = filesDao.listFiles(m.getUsername());
+						for (int i = 0; i < files.size(); i++) {
+							String[] x = files.get(i);
+							this.writer.write(x[0] + " - " + x[1] + "\n");
+							this.writer.flush();
+						}
 					}
-				} else if (m.getCommand().compareTo("download") == 0) {
-					log.info("User {} requesting file to download file with id {}", m.getUsername(), m.getFileid());
-					if (filesDao.checkOwner(m.getUsername(),  m.getFileid()) == 0) {
-						this.writer.write("You aren't the owner to that file!");
-						this.writer.flush();
-					} else {
-						this.writer.write(SendFileToClient.marshall(filesDao.sendFile(m.getFileid())));
-						this.writer.flush();
+					else if (m.getCommand().compareTo("download") == 0) {
+						log.info("User {} requesting file to download file with id {}", m.getUsername(), m.getFileid());
+						if (filesDao.checkOwner(m.getUsername(),  m.getFileid()) == 0) {
+							this.writer.write("You aren't the owner to that file!");
+							this.writer.flush();
+						} else {
+							this.writer.write(SendFileToClient.marshall(filesDao.sendFile(m.getFileid())));
+							this.writer.flush();
+						}
 					}
-				}
-			} catch (IOException e) {
+				} 
+			}catch (IOException e) {
 				bool = false;
 				log.error("There was an issue with the File I/O {}", e);
 			} catch (SQLException e) {
