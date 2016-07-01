@@ -12,10 +12,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.cooksys.ftd.assessment.filesharing.api.GetFileFromClient;
+import com.cooksys.ftd.assessment.filesharing.api.ParseMessage;
 import com.cooksys.ftd.assessment.filesharing.api.RegisterUser;
 import com.cooksys.ftd.assessment.filesharing.api.SendFileToClient;
 import com.cooksys.ftd.assessment.filesharing.dao.FilesDao;
 import com.cooksys.ftd.assessment.filesharing.dao.UserDao;
+import com.cooksys.ftd.assessment.filesharing.db.Message;
 import com.cooksys.ftd.assessment.filesharing.db.User;
 
 public class ClientHandler implements Runnable {
@@ -35,6 +37,8 @@ public class ClientHandler implements Runnable {
 		while (bool) {
 			try {
 				String echo = this.reader.readLine();
+				Message m = ParseMessage.unmarshall(echo);
+				log.debug("{}", m.getCommand());
 				if (echo.startsWith("{\"user\":")) {
 					log.info("User requesting to register");
 					User u = RegisterUser.unmarshall(echo);
@@ -49,10 +53,11 @@ public class ClientHandler implements Runnable {
 						this.writer.flush();
 						log.info("Return register user result: {}", userDao.registerUser(u));
 					}
-				} else if (echo.startsWith("passhashget ")) {
-					String[] a = echo.split(" ");
-					this.writer.write(userDao.passwordHash(a[1]));
-					log.debug("{}", userDao.passwordHash(a[1]));
+				} //else if (echo.startsWith("passhashget ")) {
+				else if (m.getCommand().compareTo("gethash") == 0) {
+					//String[] a = echo.split(" ");
+					this.writer.write(userDao.passwordHash(m.getUsername()));
+					log.debug("{}", userDao.passwordHash(m.getUsername()));
 					this.writer.flush();
 				} else if (echo.startsWith("getlist ")) {
 					String[] a = echo.split(" ");

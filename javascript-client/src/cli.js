@@ -35,12 +35,16 @@ const closeConnection = () => {
 */
 const writeTo = (string) => server.write(string + '\n')
 
-const writeJSONUser = (object) => {
-  server.write(JSON.stringify({ 'user': object }) + '\n')
-}
-
-const writeJSONFile = (object) => {
-  server.write(JSON.stringify({ 'files': object }) + '\n')
+const writeJSON = (type, object) => {
+  if (type === 'user') {
+    server.write(JSON.stringify({ 'user': object }) + '\n')
+  } else if (type === 'file') {
+    server.write(JSON.stringify({ 'files': object }) + '\n')
+  } else if (type === 'gethash') {
+    server.write(JSON.stringify({ 'Message': object }) + '\n')
+  }else if (type === 'getfiles') {
+    server.write(JSON.stringify({ 'gethash': object }) + '\n')
+  }
 }
 
 /* Login command
@@ -52,7 +56,12 @@ cli
   .description('Logs you in')
   .action((args, callback) => {
     connectToServer()
-    writeTo(`passhashget ${args.username}`)
+    //  writeTo(`passhashget ${args.username}`)
+    let userObj = {
+      'username': args.username,
+      'command': 'gethash'
+    }
+    writeJSON('gethash', userObj)
     server.on('data', (d) => {
       let hashServer = d.toString()
       let comparing = compareHash(args.password, hashServer)
@@ -109,7 +118,7 @@ cli
     let hashTo
     a.then((hashed) => hashTo = hashed)
     .then(() => connectToServer())
-    .then(() => writeJSONUser(createUser(args.username, hashTo)))
+    .then(() => writeJSON('user', createUser(args.username, hashTo)))
     .then(() => {
       server.on('data', (d) => {
         cli.log(d.toString())

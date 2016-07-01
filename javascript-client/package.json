@@ -30,6 +30,7 @@
   },
   "dependencies": {
     "bcryptjs": "^2.3.0",
-    "vorpal": "^1.11.2"
+    "vorpal": "^1.11.2",
+    "chalk": "^1.1.3"
   }
 }
