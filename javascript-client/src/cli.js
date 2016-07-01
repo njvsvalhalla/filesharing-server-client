@@ -5,7 +5,7 @@ import fs from 'fs'
 
 import createUser from './model/user'
 import createFile from './model/File'
-import { compareHash } from './lib/hash'
+import { hash, compareHash } from './lib/hash'
 
 /* constant variables */
 const cli = vorpal()
@@ -46,15 +46,29 @@ cli
   .command('login <username> <password>')
   .description('Logs you in')
   .action((args, callback) => {
+    /*
+    let a = hash(args.password)
+    let hashTo
+    a.then((hashed) => hashTo = hashed)
+    .then(() => connectToServer())
+    .then(() => writeJSONUser(createUser(args.username, hashTo)))
+    .then(() => closeConnection())
+    .then(() => cli.log('You successfully registered!'))
+    .catch((err) => cli.log(`There was an error when registering: ${err}`))
+    */
     connectToServer()
     writeTo(`passhashget ${args.username}`)
     server.on('data', (d) => {
-      if (compareHash(args.password, d.toString())) {
-        loggedin = args.username
-        cli.log(`You have now logged in as ${loggedin}`)
-      } else {
-        cli.log('Something went wrong logging in :(')
-      }
+      let hashServer = d.toString()
+      let comparing = compareHash(args.password, hashServer)
+      comparing.then((res) => {
+        if (res) {
+          loggedin = args.username
+          cli.log(`You have now logged in as ${loggedin}`)
+        } else {
+          cli.log('Please check your username or password again.')
+        }
+      })
     })
     closeConnection()
     callback()
@@ -96,10 +110,14 @@ cli
   .command('register <username> <password>')
   .description('Register your user to our database')
   .action((args, callback) => {
-    connectToServer()
-    writeJSONUser(createUser(args.username, args.password))
-    closeConnection()
-    callback()
+    let a = hash(args.password)
+    let hashTo
+    a.then((hashed) => hashTo = hashed)
+    .then(() => connectToServer())
+    .then(() => writeJSONUser(createUser(args.username, hashTo)))
+    .then(() => closeConnection())
+    .then(() => cli.log('You successfully registered!'))
+    .catch((err) => cli.log(`There was an error when registering: ${err}`))
   })
 
 /* Download file
