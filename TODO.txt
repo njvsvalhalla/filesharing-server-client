@@ -2,6 +2,9 @@ Implement promises in the cli and hashes w/ promises
 
 Why is compareHash not working if called from hash.js but works fine if function is in cli.js?
 
+BE SURE TO IMPLEMENT WARNINGS IN CLIENT FUNCTIONS IE IF USER EXISTS WHEN TRYING TO REGISTER THAT IS WHY YOU RETURNED -1 IN THE SERVER
+BE SURE TO IMPLEMENT CHECKS ON WHETHER OR NOT THE USER OWNS THE FILE THEY ARE DOWNLOADING
+
 
 ******Organize******
 CLI

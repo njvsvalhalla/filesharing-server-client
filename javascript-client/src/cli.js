@@ -1,24 +1,23 @@
+/* imports */
 import vorpal from 'vorpal'
 import net from 'net'
 import fs from 'fs'
+
 import createUser from './model/user'
 import createFile from './model/File'
-import bcrypt from 'bcryptjs'
+import { compareHash } from './lib/hash'
 
-const compareHash = (password, hash) => {
-  return bcrypt.compareSync(password, hash)
-}
-
+/* constant variables */
 const cli = vorpal()
-
-let loggedin = 'neald' // when not logged in, it will be false, when logged in it will take on the username
-
-let server
-
-let buffer
-const port = 667
 const host = 'localhost'
+const port = 667
 
+/* initialize variables */
+let loggedin = false // when not logged in, it will be false, when logged in it will take on the username
+let server
+let buffer
+
+/* Server functions to connect, close, and write to our server */
 const connectToServer = () => {
   server = net.createConnection(port, host, () => {
     return 0
@@ -36,10 +35,13 @@ const writeJSONUser = (object) => {
 }
 
 const writeJSONFile = (object) => {
-//  server.write(JSON.stringify(format(JSON.stringify({ 'files': object }), 'type')) + '\n')
   server.write(JSON.stringify({ 'files': object }) + '\n')
 }
 
+/* Login command
+    Takes a username, password, and authenticates the hash, if successful
+    we log in
+*/
 cli
   .command('login <username> <password>')
   .description('Logs you in')
@@ -58,6 +60,9 @@ cli
     callback()
   })
 
+/* Logout command
+  If you are logged in, it logs you out
+*/
 cli
   .command('logout')
   .description('Logs you out, if you are logged in')
@@ -70,6 +75,9 @@ cli
     callback()
   })
 
+/* amiloggedin
+    If you are logged in, it tells you your username
+*/
 cli
   .command('amiloggedin')
   .description('Tells if you are logged in and what user you are logged in as')
@@ -81,7 +89,9 @@ cli
     }
     callback()
   })
-
+/* Register command
+    Takes your username and password, and registers with the server
+*/
 cli
   .command('register <username> <password>')
   .description('Register your user to our database')
@@ -92,61 +102,98 @@ cli
     callback()
   })
 
+/* Download file
+    Takes a fileId, if the user is logged in, and downloads it. If a path is specified,
+    it saves it to that, otherwise takes the pathname from the database
+*/
+
 cli
   .command('download <fileid> [filepath]')
   .description('Downloads a file from your database')
   .action((args, callback) => {
-    connectToServer()
-    writeTo(`getfile ${args.fileid}`)
-    server.on('data', (d) => {
-      let parsed = JSON.parse((d.toString()))
-      let filePathToSave = parsed.files.filePath
-      let buffer = Buffer.from(parsed.files.buffer, 'base64')
-      fs.open(filePathToSave, 'w', (err, fd) => {
-        if (err) cli.log(`Error opening file to write file: ${err}`)
-        fs.write(fd, buffer, 0, buffer.length, null, (err) => {
-          if (err) cli.log(`Error writing to file: ${err}`)
-          fs.close(fd, () => {
-            cli.log(`File written to ${filePathToSave}!`)
+    if (!loggedin) {
+      cli.log('Sorry if you wish to use this command, please try to log in!')
+    } else {
+      connectToServer()
+      writeTo(`getfile ${args.fileid}`)
+      server.on('data', (d) => {
+        let filePathToSave
+        let parsed = JSON.parse((d.toString()))
+        if (!args.filepath) {
+          filePathToSave = parsed.files.filePath
+        } else {
+          filePathToSave = args.filepath
+        }
+        let buffer = Buffer.from(parsed.files.buffer, 'base64')
+        fs.open(filePathToSave, 'w', (err, fd) => {
+          if (err) cli.log(`Error opening file to write file: ${err}`)
+          fs.write(fd, buffer, 0, buffer.length, null, (err) => {
+            if (err) cli.log(`Error writing to file: ${err}`)
+            fs.close(fd, () => {
+              cli.log(`File written to ${filePathToSave}!`)
+            })
           })
         })
       })
-      closeConnection()
-      callback()
-    })
+    }
+    closeConnection()
+    callback()
   })
+/* Upload command
+    takes a file path from the local machine, and if the user wants to save it somewhere else, that gets passed in.
+    Converts the file to a base64 string and passed to the server for storage
+*/
 cli
   .command('upload <absolutefilepath> [pathfordatabase]')
   .description('Upload a file to you')
   .action((args, callback) => {
-    connectToServer()
-    fs.open(args.absolutefilepath, 'r', function (status, fd) {
-      if (status) {
-        console.log(status.message)
-        return
+    if (!loggedin) {
+      cli.log('Sorry if you wish to use this command, please try to log in!')
+    } else {
+      let filePathToUpload
+      if (!args.pathfordatabase) {
+        filePathToUpload = args.absolutefilepath
+      } else {
+        filePathToUpload = args.pathfordatabase
       }
-      buffer = new Buffer.alloc(fs.statSync(args.absolutefilepath).size)
-      fs.read(fd, buffer, 0, buffer.length, 0, function (err, num) {
-        console.log(buffer.toString('base64'))
-        writeJSONFile(createFile(args.absolutefilepath, buffer.toString('base64'), loggedin))
-        if (err) throw err
+      connectToServer()
+      fs.open(args.absolutefilepath, 'r', (err, fd) => {
+        if (err) {
+          cli.log(`There was an error opening the file to send: ${err}`)
+        }
+        buffer = new Buffer.alloc(fs.statSync(args.absolutefilepath).size)
+        fs.read(fd, buffer, 0, buffer.length, 0, (err, num) => {
+          if (err) {
+            cli.log(`There was an error opening the file to send: ${err}`)
+          }
+          writeJSONFile(createFile(filePathToUpload, buffer.toString('base64'), loggedin))
+          if (err) throw err
+        })
       })
-    })
-  //  closeConnection()
+    }
+    closeConnection()
     callback()
   })
+
+/* Files command
+    List files for specified user, if logged in
+*/
 
 cli
   .command('files')
   .description('Retrieve list of files')
   .action((args, callback) => {
-    connectToServer()
-    writeTo(`getlist ${loggedin}`)
-    server.on('data', (d) => {
-      cli.log(d.toString())
-    })
-    closeConnection()
-    callback()
+    if (!loggedin) {
+      cli.log('Sorry if you wish to use this command, please try to log in!')
+    } else {
+      connectToServer()
+      writeTo(`getlist ${loggedin}`)
+      server.on('data', (d) => {
+        cli.log(d.toString())
+      })
+      closeConnection()
+      callback()
+    }
   })
 
 export default cli
