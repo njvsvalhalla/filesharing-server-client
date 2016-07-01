@@ -12,7 +12,7 @@ import com.cooksys.ftd.assessment.filesharing.db.User;
 
 public class RegisterUser {
 	
-	public User unmarshall(String input) throws JAXBException {
+	public static User unmarshall(String input) throws JAXBException {
 
 		Map<String, Object> properties = new HashMap<String, Object>(2);
 		properties.put("eclipselink.media-type", "application/json");

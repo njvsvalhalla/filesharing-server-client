@@ -1,6 +1,8 @@
 import vorpal from 'vorpal'
 import net from 'net'
+import fs from 'fs'
 import createUser from './model/user'
+import createFile from './model/File'
 import bcrypt from 'bcryptjs'
 
 const compareHash = (password, hash) => {
@@ -9,7 +11,7 @@ const compareHash = (password, hash) => {
 
 const cli = vorpal()
 
-let loggedin = false // when not logged in, it will be false, when logged in it will take on the username
+let loggedin = 'neald' // when not logged in, it will be false, when logged in it will take on the username
 
 let server
 const port = 667
@@ -29,6 +31,11 @@ const writeTo = (string) => server.write(string + '\n')
 
 const writeJSONUser = (object) => {
   server.write(JSON.stringify({ 'user': object }) + '\n')
+}
+
+const writeJSONFile = (object) => {
+//  server.write(JSON.stringify(format(JSON.stringify({ 'files': object }), 'type')) + '\n')
+  server.write(JSON.stringify({ 'files': object }) + '\n')
 }
 
 cli
@@ -52,12 +59,13 @@ cli
 cli
   .command('logout')
   .description('Logs you out, if you are logged in')
-  .action(() => {
+  .action((callback) => {
     if (!loggedin) {
       cli.log('You are not logged in. You have to be logged in to log out.')
     } else {
       loggedin = false
     }
+    callback()
   })
 
 cli
@@ -85,10 +93,49 @@ cli
 cli
   .command('download <fileid> [filepath]')
   .description('Downloads a file from your database')
+  .action((args, callback) => {
+    connectToServer()
+    writeTo(`getfile ${args.fileid}`)
+    server.on('data', (d) => {
+      let parsed = JSON.parse((d.toString()))
+      let filePathToSave = parsed.files.filePath
+      let buffer = Buffer.from(parsed.files.buffer, 'base64')
+      fs.open(filePathToSave, 'w', function(err, fd) {
+          if (err) {
+              throw 'error opening file: ' + err;
+          }
 
+          fs.write(fd, buffer, 0, buffer.length, null, function(err) {
+              if (err) throw 'error writing file: ' + err;
+              fs.close(fd, function() {
+                  console.log('file written');
+              })
+          });
+      });
+    closeConnection()
+    callback()
+  })
+})
 cli
-  .command('upload <filepath> [filepath]')
+  .command('upload <absolutefilepath> [pathfordatabase]')
   .description('Upload a file to you')
+  .action((args, callback) => {
+    connectToServer()
+    fs.open(args.absolutefilepath, 'r', function (status, fd) {
+      if (status) {
+        console.log(status.message)
+        return
+      }
+     let buffer = new Buffer.alloc(fs.statSync(args.absolutefilepath).size)
+      fs.read(fd, buffer, 0, buffer.length, 0, function (err, num) {
+        console.log(buffer.toString('base64'))
+        writeJSONFile(createFile(args.absolutefilepath, buffer.toString('base64'), loggedin))
+        if (err) throw err
+      })
+    })
+  //  closeConnection()
+    callback()
+  })
 
 cli
   .command('files')

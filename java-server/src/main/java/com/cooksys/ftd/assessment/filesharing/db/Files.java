@@ -2,43 +2,47 @@ package com.cooksys.ftd.assessment.filesharing.db;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
-	
-@XmlRootElement(name = "file")
-public class Files {
 
-	@XmlElement(name = "absolutePath")
-	private String absolutePath;
-	@XmlElement(name = "userId")
-	private int userId;
-	@XmlElement(name = "bArray")
-	private byte[] byteArray;
-	
+@XmlRootElement(name = "files")
+public class Files {
+	@XmlElement(name = "filePath")
+	private String filePath;
+	@XmlElement(name = "username")
+	private String username;
+	@XmlElement(name = "buffer")
+	private String buffer;
+
 	public String getAbsolutePath() {
-		return absolutePath;
+		return filePath;
 	}
+
 	public void setAbsolutePath(String absolutePath) {
-		this.absolutePath = absolutePath;
+		this.filePath = absolutePath;
 	}
-	public byte[] getByteArray() {
-		return byteArray;
+
+	public String getByteArray() {
+		return buffer;
 	}
-	public void setByteArray(byte[] byteArray) {
-		this.byteArray = byteArray;
+
+	public void setByteArray(String byteArray) {
+		this.buffer = byteArray;
 	}
-	public int getUserid() {
-		return userId;
+
+	public String getusername() {
+		return username;
 	}
-	public void setUserid(int userid) {
-		this.userId = userid;
+
+	public void setusername(String username) {
+		this.username = username;
 	}
+
 	@Override
 	public String toString() {
-		return "Files [absolutePath=" + absolutePath + ", userid=" + userId + "]";
+		return "Files [absolutePath=" + filePath + ", username=" + username + "]";
 	}
-	
-	public Files () {
-		
+
+	public Files() {
+
 	}
-	
 
 }

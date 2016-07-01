@@ -1,27 +1,20 @@
 package com.cooksys.ftd.assessment.filesharing;
 
-import java.io.StringReader;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
-import javax.xml.bind.Unmarshaller;
 
-import org.eclipse.persistence.jaxb.JAXBContextFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.cooksys.ftd.assessment.filesharing.dao.FilesDao;
 import com.cooksys.ftd.assessment.filesharing.dao.UserDao;
-import com.cooksys.ftd.assessment.filesharing.db.User;
 import com.cooksys.ftd.assessment.filesharing.server.Server;
 
 public class Main {

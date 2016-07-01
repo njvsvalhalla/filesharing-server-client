@@ -11,12 +11,14 @@ import javax.xml.bind.JAXBException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.cooksys.ftd.assessment.filesharing.api.GetFileFromClient;
 import com.cooksys.ftd.assessment.filesharing.api.RegisterUser;
+import com.cooksys.ftd.assessment.filesharing.api.SendFileToClient;
 import com.cooksys.ftd.assessment.filesharing.dao.FilesDao;
 import com.cooksys.ftd.assessment.filesharing.dao.UserDao;
 import com.cooksys.ftd.assessment.filesharing.db.User;
 
-public class ClientHandler extends RegisterUser implements Runnable {
+public class ClientHandler implements Runnable {
 
 	private BufferedReader reader;
 	private PrintWriter writer;
@@ -33,8 +35,9 @@ public class ClientHandler extends RegisterUser implements Runnable {
 			try {
 
 				String echo = this.reader.readLine();
+				log.debug("{}", echo);
 				if (echo.startsWith("{\"user\":")) {
-					User u = unmarshall(echo);
+					User u = RegisterUser.unmarshall(echo);
 					log.debug("Return register user result: {}", userDao.registerUser(u));
 				}
 				if (echo.startsWith("passhashget ")) {
@@ -52,6 +55,15 @@ public class ClientHandler extends RegisterUser implements Runnable {
 						this.writer.write(x[0] + " - " + x[1]);
 						this.writer.flush();
 					}
+				}
+				if (echo.startsWith("{\"files\":")) {
+					filesDao.registerFile(GetFileFromClient.unmarshall(echo));
+				}
+				if (echo.startsWith("getfile ")) {
+					String[] a = echo.split(" ");
+					this.writer.write(SendFileToClient.marshall(filesDao.sendFile(Integer.parseInt((a[1])))));
+				    log.debug("{}", SendFileToClient.marshall(filesDao.sendFile(Integer.parseInt((a[1])))));
+					this.writer.flush();
 				}
 			} catch (IOException e) {
 				log.error("There was an issue with the connection {}", e);
