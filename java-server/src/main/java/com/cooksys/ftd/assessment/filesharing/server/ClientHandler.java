@@ -38,7 +38,7 @@ public class ClientHandler implements Runnable {
 			try {
 				String echo = this.reader.readLine();
 				Message m = ParseMessage.unmarshall(echo);
-				log.debug("{}", m.getCommand());
+				log.debug("{}", m.getUsername());
 				if (echo.startsWith("{\"user\":")) {
 					log.info("User requesting to register");
 					User u = RegisterUser.unmarshall(echo);
@@ -53,16 +53,14 @@ public class ClientHandler implements Runnable {
 						this.writer.flush();
 						log.info("Return register user result: {}", userDao.registerUser(u));
 					}
-				} //else if (echo.startsWith("passhashget ")) {
+				}
 				else if (m.getCommand().compareTo("gethash") == 0) {
-					//String[] a = echo.split(" ");
 					this.writer.write(userDao.passwordHash(m.getUsername()));
 					log.debug("{}", userDao.passwordHash(m.getUsername()));
 					this.writer.flush();
-				} else if (echo.startsWith("getlist ")) {
-					String[] a = echo.split(" ");
+				} else if (m.getCommand().compareTo("getfiles") == 0) {
 					ArrayList<String[]> files = new ArrayList<String[]>();
-					files = filesDao.listFiles(a[1]);
+					files = filesDao.listFiles(m.getUsername());
 					for (int i = 0; i < files.size(); i++) {
 						String[] x = files.get(i);
 						this.writer.write(x[0] + " - " + x[1] + "\n");
@@ -80,14 +78,13 @@ public class ClientHandler implements Runnable {
 						this.writer.write("Your file successfully registered under the following id: " + res + "!");
 						this.writer.flush();
 					}
-				} else if (echo.startsWith("getfile ")) {
-					String[] a = echo.split(" ");
-					log.info("User {} requesting file to download file with id {}", a[2], a[1]);
-					if (filesDao.checkOwner(a[2], Integer.parseInt((a[1]))) == 0) {
+				} else if (m.getCommand().compareTo("download") == 0) {
+					log.info("User {} requesting file to download file with id {}", m.getUsername(), m.getFileid());
+					if (filesDao.checkOwner(m.getUsername(),  m.getFileid()) == 0) {
 						this.writer.write("You aren't the owner to that file!");
 						this.writer.flush();
 					} else {
-						this.writer.write(SendFileToClient.marshall(filesDao.sendFile(Integer.parseInt((a[1])))));
+						this.writer.write(SendFileToClient.marshall(filesDao.sendFile(m.getFileid())));
 						this.writer.flush();
 					}
 				}

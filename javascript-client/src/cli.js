@@ -33,7 +33,7 @@ const closeConnection = () => {
   writeJSONUser sends a JSON object for the user to the server
   writeJSONFile sends a JSON object for the file to the server
 */
-const writeTo = (string) => server.write(string + '\n')
+// const writeTo = (string) => server.write(string + '\n')
 
 const writeJSON = (type, object) => {
   if (type === 'user') {
@@ -43,7 +43,7 @@ const writeJSON = (type, object) => {
   } else if (type === 'gethash') {
     server.write(JSON.stringify({ 'Message': object }) + '\n')
   }else if (type === 'getfiles') {
-    server.write(JSON.stringify({ 'gethash': object }) + '\n')
+    server.write(JSON.stringify({ 'Message': object }) + '\n')
   }
 }
 
@@ -142,7 +142,13 @@ cli
       cli.log('Sorry if you wish to use this command, please try to log in!')
     } else {
       connectToServer()
-      writeTo(`getfile ${args.fileid} ${loggedin}`)
+      let userObj = {
+        'username': loggedin,
+        'command': 'download',
+        'fileid': args.fileid
+      }
+      writeJSON('getfiles', userObj)
+      // writeTo(`getfile ${args.fileid} ${loggedin}`)
       server.on('data', (d) => {
         if (d.toString() === 'You aren\'t the owner to that file!') {
           cli.log(d.toString())
@@ -202,7 +208,7 @@ cli
           if (err) {
             cli.log(`There was an error opening the file to send: ${err}`)
           }
-          writeJSONFile(createFile(filePathToUpload, buffer.toString('base64'), loggedin))
+          writeJSON('file', createFile(filePathToUpload, buffer.toString('base64'), loggedin))
           if (err) throw err
         })
       })
@@ -222,7 +228,11 @@ cli
       cli.log('Sorry if you wish to use this command, please try to log in!')
     } else {
       connectToServer()
-      writeTo(`getlist ${loggedin}`)
+      let userObj = {
+        'username': loggedin,
+        'command': 'getfiles'
+      }
+      writeJSON('gethash', userObj)
       cli.log('ID |  Path')
       server.on('data', (d) => {
         cli.log(d.toString())

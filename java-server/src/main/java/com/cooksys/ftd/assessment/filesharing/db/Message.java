@@ -11,6 +11,16 @@ public class Message {
 	private String username;
 	@XmlElement(name = "userid")
 	private int userid;
+	@XmlElement(name = "fileid")
+	private int fileid;
+	
+	
+	public int getFileid() {
+		return fileid;
+	}
+	public void setFileid(int fileid) {
+		this.fileid = fileid;
+	}
 	public String getCommand() {
 		return command;
 	}
