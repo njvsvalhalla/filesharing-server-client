@@ -140,6 +140,7 @@ cli
   .action((args, callback) => {
     if (!loggedin) {
       cli.log('Sorry if you wish to use this command, please try to log in!')
+      callback()
     } else {
       connectToServer()
       let userObj = {
@@ -163,9 +164,15 @@ cli
           }
           let buffer = Buffer.from(parsed.files.buffer, 'base64')
           fs.open(filePathToSave, 'w', (err, fd) => {
-            if (err) cli.log(`Error opening file to write file: ${err}`)
+            if (err) {
+              cli.log(`Error opening file to write file: ${err}`)
+              callback()
+            }
             fs.write(fd, buffer, 0, buffer.length, null, (err) => {
-              if (err) cli.log(`Error writing to file: ${err}`)
+              if (err) {
+                cli.log(`Error writing to file: ${err}`)
+                callback()
+              }
               fs.close(fd, () => {
                 cli.log(`File written to ${filePathToSave}!`)
               })
@@ -174,7 +181,6 @@ cli
         }
       })
     }
-    closeConnection()
     callback()
   })
 /* Upload command
@@ -187,6 +193,7 @@ cli
   .action((args, callback) => {
     if (!loggedin) {
       cli.log('Sorry if you wish to use this command, please try to log in!')
+      callback()
     } else {
       let filePathToUpload
       if (!args.pathfordatabase) {
@@ -202,11 +209,13 @@ cli
       fs.open(args.absolutefilepath, 'r', (err, fd) => {
         if (err) {
           cli.log(`There was an error opening the file to send: ${err}`)
+          callback()
         }
         buffer = new Buffer.alloc(fs.statSync(args.absolutefilepath).size)
         fs.read(fd, buffer, 0, buffer.length, 0, (err, num) => {
           if (err) {
             cli.log(`There was an error opening the file to send: ${err}`)
+            callback()
           }
           writeJSON('file', createFile(filePathToUpload, buffer.toString('base64'), loggedin))
           if (err) throw err
@@ -226,6 +235,7 @@ cli
   .action((args, callback) => {
     if (!loggedin) {
       cli.log('Sorry if you wish to use this command, please try to log in!')
+      callback()
     } else {
       connectToServer()
       let userObj = {
