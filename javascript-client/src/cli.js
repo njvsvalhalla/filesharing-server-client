@@ -46,16 +46,6 @@ cli
   .command('login <username> <password>')
   .description('Logs you in')
   .action((args, callback) => {
-    /*
-    let a = hash(args.password)
-    let hashTo
-    a.then((hashed) => hashTo = hashed)
-    .then(() => connectToServer())
-    .then(() => writeJSONUser(createUser(args.username, hashTo)))
-    .then(() => closeConnection())
-    .then(() => cli.log('You successfully registered!'))
-    .catch((err) => cli.log(`There was an error when registering: ${err}`))
-    */
     connectToServer()
     writeTo(`passhashget ${args.username}`)
     server.on('data', (d) => {
@@ -115,8 +105,13 @@ cli
     a.then((hashed) => hashTo = hashed)
     .then(() => connectToServer())
     .then(() => writeJSONUser(createUser(args.username, hashTo)))
-    .then(() => closeConnection())
-    .then(() => cli.log('You successfully registered!'))
+    .then(() => {
+      server.on('data', (d) => {
+        cli.log(d.toString())
+        closeConnection()
+        callback()
+      })
+    })
     .catch((err) => cli.log(`There was an error when registering: ${err}`))
   })
 
@@ -133,25 +128,30 @@ cli
       cli.log('Sorry if you wish to use this command, please try to log in!')
     } else {
       connectToServer()
-      writeTo(`getfile ${args.fileid}`)
+      writeTo(`getfile ${args.fileid} ${loggedin}`)
       server.on('data', (d) => {
-        let filePathToSave
-        let parsed = JSON.parse((d.toString()))
-        if (!args.filepath) {
-          filePathToSave = parsed.files.filePath
+        if (d.toString() === 'You aren\'t the owner to that file!') {
+          cli.log(d.toString())
+          closeConnection()
         } else {
-          filePathToSave = args.filepath
-        }
-        let buffer = Buffer.from(parsed.files.buffer, 'base64')
-        fs.open(filePathToSave, 'w', (err, fd) => {
-          if (err) cli.log(`Error opening file to write file: ${err}`)
-          fs.write(fd, buffer, 0, buffer.length, null, (err) => {
-            if (err) cli.log(`Error writing to file: ${err}`)
-            fs.close(fd, () => {
-              cli.log(`File written to ${filePathToSave}!`)
+          let filePathToSave
+          let parsed = JSON.parse((d.toString()))
+          if (!args.filepath) {
+            filePathToSave = parsed.files.filePath
+          } else {
+            filePathToSave = args.filepath
+          }
+          let buffer = Buffer.from(parsed.files.buffer, 'base64')
+          fs.open(filePathToSave, 'w', (err, fd) => {
+            if (err) cli.log(`Error opening file to write file: ${err}`)
+            fs.write(fd, buffer, 0, buffer.length, null, (err) => {
+              if (err) cli.log(`Error writing to file: ${err}`)
+              fs.close(fd, () => {
+                cli.log(`File written to ${filePathToSave}!`)
+              })
             })
           })
-        })
+        }
       })
     }
     closeConnection()
@@ -175,6 +175,10 @@ cli
         filePathToUpload = args.pathfordatabase
       }
       connectToServer()
+      server.on('data', (d) => {
+        cli.log(d.toString())
+        closeConnection() //  if we get data then we know we successfully have the file stored or it messed up
+      })
       fs.open(args.absolutefilepath, 'r', (err, fd) => {
         if (err) {
           cli.log(`There was an error opening the file to send: ${err}`)
@@ -189,7 +193,6 @@ cli
         })
       })
     }
-    closeConnection()
     callback()
   })
 
@@ -205,6 +208,7 @@ cli
       cli.log('Sorry if you wish to use this command, please try to log in!')
     } else {
       connectToServer()
+      cli.log(`getlist ${loggedin}`)
       writeTo(`getlist ${loggedin}`)
       server.on('data', (d) => {
         cli.log(d.toString())

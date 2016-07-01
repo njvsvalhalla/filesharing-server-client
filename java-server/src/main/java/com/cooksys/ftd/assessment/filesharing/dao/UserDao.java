@@ -20,32 +20,45 @@ public class UserDao extends AbstractDao {
 	/**
 	 * registerUser registers a User object into the database
 	 * 
-	 * @param User object
+	 * @param User
+	 *            object
 	 * @return returns the user ID if it was successful, if not -1
 	 * @throws SQLException
 	 */
 	public int registerUser(User user) throws SQLException {
-		sql = "INSERT INTO user (username, password) VALUES (?, ?)";
-		stmt = this.getConn().prepareStatement(sql);
-		int id;
 
+		String sql = "SELECT username FROM user WHERE username = ?";
+		stmt = this.getConn().prepareStatement(sql);
 		stmt.setString(1, user.getUsername());
-		stmt.setString(2, user.getPasshash());
-		stmt.executeUpdate();
-
-		sql = "SELECT @@IDENTITY";
-		stmt = this.getConn().prepareStatement(sql);
 		ResultSet rs = stmt.executeQuery();
 		if (rs.next()) {
-			id = rs.getInt("@@IDENTITY");
-			return id;
+			return 1;
+		} else {
+			sql = "INSERT INTO user (username, password) VALUES (?, ?)";
+			stmt = this.getConn().prepareStatement(sql);
+			int id;
+
+			stmt.setString(1, user.getUsername());
+			stmt.setString(2, user.getPasshash());
+			stmt.executeUpdate();
+
+			sql = "SELECT @@IDENTITY";
+			stmt = this.getConn().prepareStatement(sql);
+			rs = stmt.executeQuery();
+			if (rs.next()) {
+				id = rs.getInt("@@IDENTITY");
+				return id;
+			}
 		}
-		return -1;
+		return 99;
 	}
-	
+
 	/**
-	 * passwordHash retrieves the hash from the database, used for authentication
-	 * @param Username string
+	 * passwordHash retrieves the hash from the database, used for
+	 * authentication
+	 * 
+	 * @param Username
+	 *            string
 	 * @return a password hash
 	 * @throws SQLException
 	 */

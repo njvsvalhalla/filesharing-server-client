@@ -33,48 +33,71 @@ public class ClientHandler implements Runnable {
 		log.debug("Started a connection");
 		while (true) {
 			try {
-
 				String echo = this.reader.readLine();
-				log.debug("{}", echo);
+				log.debug("input {}", echo);
 				if (echo.startsWith("{\"user\":")) {
+					log.debug("User requesting to register");
 					User u = RegisterUser.unmarshall(echo);
-					log.debug("Return register user result: {}", userDao.registerUser(u));
-				}
-				if (echo.startsWith("passhashget ")) {
+					int reggedUser = userDao.registerUser(u);
+					if (reggedUser == 1) {
+						this.writer.write(
+								"Register failed due to a SQL error. If you are having troubles, plese contact the admin");
+						log.info("User registration failed");
+						this.writer.flush();
+					} else {
+						this.writer.write("You successfully registered! You can now log in");
+						this.writer.flush();
+						log.debug("Return register user result: {}", userDao.registerUser(u));
+					}
+				} else if (echo.startsWith("passhashget ")) {
 					String[] a = echo.split(" ");
 					this.writer.write(userDao.passwordHash(a[1]));
 					log.debug("{}", userDao.passwordHash(a[1]));
 					this.writer.flush();
-				}
-				if (echo.startsWith("getlist ")) {
+				} else if (echo.startsWith("getlist ")) {
 					String[] a = echo.split(" ");
 					ArrayList<String[]> files = new ArrayList<String[]>();
 					files = filesDao.listFiles(a[1]);
 					for (int i = 0; i < files.size(); i++) {
 						String[] x = files.get(i);
-						this.writer.write(x[0] + " - " + x[1]);
+						this.writer.write(x[0] + " - " + x[1] + "\n");
+						this.writer.flush();
+					}
+				} else if (echo.startsWith("{\"files\":")) {
+					int res = filesDao.registerFile(GetFileFromClient.unmarshall(echo));
+					log.info("User is uploading a file! ");
+					if (res == -1) {
+						log.info("File upload failed.");
+						this.writer.write("Something went wrong registering the file. Please try again later");
+						this.writer.flush();
+					} else {
+						log.info("File successful with the id {}", res);
+						this.writer.write("Your file successfully registered under the following id: " + res + "!");
+						this.writer.flush();
+					}
+				} else if (echo.startsWith("getfile ")) {
+					String[] a = echo.split(" ");
+					log.info("User {} requesting file to download file with id {}", a[2], a[1]);
+					if (filesDao.checkOwner(a[2], Integer.parseInt((a[1]))) == 0) {
+						this.writer.write("You aren't the owner to that file!");
+						this.writer.flush();
+					} else {
+						this.writer.write(SendFileToClient.marshall(filesDao.sendFile(Integer.parseInt((a[1])))));
 						this.writer.flush();
 					}
 				}
-				if (echo.startsWith("{\"files\":")) {
-					filesDao.registerFile(GetFileFromClient.unmarshall(echo));
-				}
-				if (echo.startsWith("getfile ")) {
-					String[] a = echo.split(" ");
-					this.writer.write(SendFileToClient.marshall(filesDao.sendFile(Integer.parseInt((a[1])))));
-				    log.debug("{}", SendFileToClient.marshall(filesDao.sendFile(Integer.parseInt((a[1])))));
-					this.writer.flush();
-				}
 			} catch (IOException e) {
-				log.error("There was an issue with the connection {}", e);
+
+				// log.error("There was an issue with the connection {}", e);
 			} catch (SQLException e) {
 				// TODO Auto-generated catch block
-				e.printStackTrace();
+				// e.printStackTrace();
 			} catch (JAXBException e) {
 				// TODO Auto-generated catch block
-				e.printStackTrace();
+				// e.printStackTrace();
 			}
 		}
+
 	}
 
 	public BufferedReader getReader() {
