@@ -18,29 +18,34 @@ import com.cooksys.ftd.assessment.filesharing.dao.UserDao;
 import com.cooksys.ftd.assessment.filesharing.server.Server;
 
 public class Main {
+	//We're gonna initiate our logger and mysql here.
 	private static Logger log = LoggerFactory.getLogger(Main.class);
 	private static String driver = "com.mysql.cj.jdbc.Driver";
-	private static String url = "jdbc:mysql://localhost:3306/filesharing?useSSL=false";
+	//I had this weird connection error where I had to add a timezone to the end of it, may be my OS or mariadb config
+	private static String url = "jdbc:mysql://localhost:3306/filesharing?useSSL=false&useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC";
 	private static String username = "root";
-	private static String pass = "bondstone";
-
+	private static String pass = "root";
+	
+	//Depending on your system and permissions you may have to change this
 	private static int port = 667;
 
 	public static void main(String[] args) throws ClassNotFoundException, JAXBException {
 		
-		
+		//We will test the connection to our sql server, and if not throw an exception
 		log.debug("Program started. Attempting to connect to SQL");
 
 		ExecutorService executor = Executors.newCachedThreadPool();
 
 		try (Connection conn = DriverManager.getConnection(url, username, pass)) {
 			log.debug("SQL connection successful");
-
+			
+			//Once we initiate the sql connection, let's start listening on the server!
 			Class.forName(driver);
 			Server server = new Server();
 			server.setPort(port);
 			server.setExecutor(executor);
 
+			//Let's start up our userDao and filesDao objects
 			UserDao userDao = new UserDao();
 			userDao.setConn(conn);
 			server.setUserDao(userDao);
