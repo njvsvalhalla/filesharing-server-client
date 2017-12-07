@@ -11,7 +11,18 @@ public class KeywordsDao extends AbstractDao {
 
 	String sql;
 	int id;
+	FilesDao filesDao;
 	PreparedStatement stmt;
+	
+	/**
+	 * addKeyword: Takes a keyword object and attempts to insert it into the keywords
+	 * database
+	 * 
+	 * @param Keywords
+	 *            object
+	 * @return integer
+	 * @throws SQLException
+	 */
 
 	public int addKeyword(Keywords keyword) throws SQLException {
 	
@@ -43,11 +54,21 @@ public class KeywordsDao extends AbstractDao {
 		}
 	}
 	
-	public ArrayList<String> viewKeywords(int fileid) throws SQLException {
+	/**
+	 * viewKeywords: Takes a fileid to check what keywords are set onto the file
+	 * @param string 
+	 * 
+	 * @param fileid
+	 *            Integer
+	 * @return Array list of strings of all of keywords attached to file
+	 * @throws SQLException
+	 */
+	public ArrayList<String> viewKeywords(int fileId) throws SQLException {
 		ArrayList<String> keywords = new ArrayList<String>();
+		
 		String sql = "SELECT keyword FROM keywords WHERE fileid = ?";
 		stmt = this.getConn().prepareStatement(sql);
-		stmt.setInt(1, fileid);
+		stmt.setInt(1, fileId);
 		ResultSet rs = stmt.executeQuery();
 		while (rs.next()) {
 			keywords.add(rs.getString("keyword"));
@@ -55,14 +76,27 @@ public class KeywordsDao extends AbstractDao {
 		return keywords;
 	}
 	
-	public ArrayList<Integer> searchKeywords(String keyword) throws SQLException {
+	/**
+	 * searchKeywords: Takes a string to check against the database to see what files have specific keyword
+	 * 
+	 * @param keyword
+	 *            String 
+	 * @param userName
+	 *            String
+	 * @return Array list of integers of all of files that have the keyword from input
+	 * @throws SQLException
+	 */
+	public ArrayList<Integer> searchKeywords(String keyword, String userName) throws SQLException {
 		ArrayList<Integer> keywords = new ArrayList<Integer>();
 		String sql = "SELECT f.fileid, f.absolute_path FROM files AS f INNER JOIN keywords AS k ON k.fileid = f.fileid WHERE k.keyword = ?";
 		stmt = this.getConn().prepareStatement(sql);
 		stmt.setString(1, keyword);
 		ResultSet rs = stmt.executeQuery();
 		while (rs.next()) {
-			keywords.add(rs.getInt("fileid"));
+			// We wanna make sure the user owns that file!
+			if (filesDao.checkOwner(userName, rs.getInt("fileid")) > -1) {
+				keywords.add(rs.getInt("fileid"));
+			}
 		}
 		return keywords;
 	}

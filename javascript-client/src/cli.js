@@ -244,7 +244,6 @@ cli
         'fileid': args.fileid,
         'command': 'addkeyword'
       }
-      console.log(keywordObj)
       writeJSON('addkeyword',keywordObj)
       server.on('data', (d) => {
         cli.log(d.toString())
@@ -269,7 +268,6 @@ cli
           'keyword': args.keyword,
           'command': 'searchkeyword'
         }
-        console.log(keywordObj)
         writeJSON('addkeyword',keywordObj)
         cli.log('Searching for files with keyword ' + args.keyword)
         server.on('data', (d) => {
@@ -295,9 +293,8 @@ cli
             'fileid': args.fileid,
             'command': 'viewkeyword'
           }
-          console.log(keywordObj)
           writeJSON('viewkeyword',keywordObj)
-          cli.log('Viewing keywords for fileid' + args.fileid)
+          cli.log('Viewing keywords for fileid ' + args.fileid)
           server.on('data', (d) => {
             cli.log(d.toString())
           })

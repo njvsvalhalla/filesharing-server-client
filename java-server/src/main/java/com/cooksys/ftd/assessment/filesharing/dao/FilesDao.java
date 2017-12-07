@@ -86,7 +86,7 @@ public class FilesDao extends AbstractDao {
 	 *  
 	 * @param userName String
 	 * @param fileId int
-	 * @return if > 0, they own it, if 0 they don't
+	 * @return if > 0, they own it, if -1 they don't
 	 * @throws SQLException
 	 */
 	public int checkOwner(String userName, int fileId) throws SQLException {
@@ -114,7 +114,7 @@ public class FilesDao extends AbstractDao {
 	 * Returns a list of files registered to a specific username
 	 * 
 	 * @param userName
-	 *            strrng
+	 *            String
 	 * @return An array list of an array of Strings
 	 * @throws SQLException
 	 */
