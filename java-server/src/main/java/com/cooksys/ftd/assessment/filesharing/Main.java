@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.cooksys.ftd.assessment.filesharing.dao.FilesDao;
+import com.cooksys.ftd.assessment.filesharing.dao.KeywordsDao;
 import com.cooksys.ftd.assessment.filesharing.dao.UserDao;
 import com.cooksys.ftd.assessment.filesharing.server.Server;
 
@@ -27,7 +28,7 @@ public class Main {
 	private static String pass = "root";
 	
 	//Depending on your system and permissions you may have to change this
-	private static int port = 667;
+	private static int port = 1024;
 
 	public static void main(String[] args) throws ClassNotFoundException, JAXBException {
 		
@@ -53,7 +54,11 @@ public class Main {
 			FilesDao filesDao = new FilesDao();
 			filesDao.setConn(conn);
 			server.setFilesDao(filesDao);
-
+			
+			KeywordsDao keywordsDao = new KeywordsDao();
+			keywordsDao.setConn(conn);
+			server.setKeywordsDao(keywordsDao);
+			
 			Future<?> serverFuture = executor.submit(server);
 			serverFuture.get();
 
@@ -65,3 +70,4 @@ public class Main {
 	}
 
 }
+
