@@ -50,7 +50,7 @@ public class UserDao extends AbstractDao {
 				return id;
 			}
 		}
-		return 99;
+		return -1;
 	}
 
 	/**

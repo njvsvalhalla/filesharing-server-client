@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.cooksys.ftd.assessment.filesharing.dao.FilesDao;
+import com.cooksys.ftd.assessment.filesharing.dao.KeywordsDao;
 import com.cooksys.ftd.assessment.filesharing.dao.UserDao;
 
 public class Server implements Runnable {
@@ -25,6 +26,15 @@ public class Server implements Runnable {
 
 	private UserDao userDao;
 	private FilesDao filesDao;
+	private KeywordsDao keywordsDao;
+
+	public KeywordsDao getKeywordsDao() {
+		return keywordsDao;
+	}
+
+	public void setKeywordsDao(KeywordsDao keywordsDao) {
+		this.keywordsDao = keywordsDao;
+	}
 
 	@Override
 	public void run() {
@@ -53,6 +63,7 @@ public class Server implements Runnable {
 		
 		handler.setFilesDao(this.filesDao);
 		handler.setUserDao(this.userDao);
+		handler.setKeywordsDao(this.keywordsDao);
 
 		return handler;
 	}

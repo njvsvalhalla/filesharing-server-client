@@ -13,6 +13,16 @@ public class Message {
 	private int userid;
 	@XmlElement(name = "fileid")
 	private int fileid;
+	@XmlElement(name = "keyword")
+	private String keyword;
+
+	public String getKeyword() {
+		return keyword;
+	}
+
+	public void setKeyword(String keyword) {
+		this.keyword = keyword;
+	}
 
 	public int getFileid() {
 		return fileid;

@@ -10,7 +10,7 @@ import { hash, compareHash } from './lib/hash'
 /* constant variables */
 const cli = vorpal()
 const host = 'localhost'
-const port = 667
+const port = 1024
 
 /* initialize variables */
 let loggedin = false // when not logged in, it will be false, when logged in it will take on the username
@@ -40,9 +40,7 @@ const writeJSON = (type, object) => {
     server.write(JSON.stringify({ 'user': object }) + '\n')
   } else if (type === 'file') {
     server.write(JSON.stringify({ 'files': object }) + '\n')
-  } else if (type === 'gethash') {
-    server.write(JSON.stringify({ 'Message': object }) + '\n')
-  }else if (type === 'getfiles') {
+  } else  {
     server.write(JSON.stringify({ 'Message': object }) + '\n')
   }
 }
@@ -149,7 +147,6 @@ cli
         'fileid': args.fileid
       }
       writeJSON('getfiles', userObj)
-      // writeTo(`getfile ${args.fileid} ${loggedin}`)
       server.on('data', (d) => {
         if (d.toString() === 'You aren\'t the owner to that file!') {
           cli.log(d.toString())
@@ -224,9 +221,93 @@ cli
     }
     callback()
   })
+/*
+    Keyword functions.
 
+    addkeyword - adds keyword to file that you own
+    searchkeyword - searches for files with specified keyword
+    viewkeywords - lists keyword for specified fileId
+
+*/
+cli
+  .command('addkeyword <keyword> <fileid>')
+  .description('Add keyword to fileid')
+  .action((args,callback) => {
+    if (!loggedin) {
+      cli.log('Sorry if you wish to use this command, please try to log in!')
+      callback()
+    } else {
+      connectToServer()
+      let keywordObj = {
+        'username': loggedin,
+        'keyword': args.keyword,
+        'fileid': args.fileid,
+        'command': 'addkeyword'
+      }
+      console.log(keywordObj)
+      writeJSON('addkeyword',keywordObj)
+      server.on('data', (d) => {
+        cli.log(d.toString())
+      })
+      closeConnection()
+      callback()
+    }
+
+  })
+
+  cli
+    .command('searchkeyword <keyword>')
+    .description('Search for specified keyword')
+    .action((args,callback) => {
+      if (!loggedin) {
+        cli.log('Sorry if you wish to use this command, please try to log in!')
+        callback()
+      } else {
+        connectToServer()
+        let keywordObj = {
+          'username': loggedin,
+          'keyword': args.keyword,
+          'command': 'searchkeyword'
+        }
+        console.log(keywordObj)
+        writeJSON('addkeyword',keywordObj)
+        cli.log('Searching for files with keyword ' + args.keyword)
+        server.on('data', (d) => {
+          cli.log(d.toString())
+        })
+        closeConnection()
+        callback()
+      }
+
+    })
+
+    cli
+      .command('viewkeywords <fileid>')
+      .description('View keywords for fileid')
+      .action((args,callback) => {
+        if (!loggedin) {
+          cli.log('Sorry if you wish to use this command, please try to log in!')
+          callback()
+        } else {
+          connectToServer()
+          let keywordObj = {
+            'username': loggedin,
+            'fileid': args.fileid,
+            'command': 'viewkeyword'
+          }
+          console.log(keywordObj)
+          writeJSON('viewkeyword',keywordObj)
+          cli.log('Viewing keywords for fileid' + args.fileid)
+          server.on('data', (d) => {
+            cli.log(d.toString())
+          })
+          closeConnection()
+          callback()
+        }
+
+      })
 /* Files command
-    List files for specified user, if logged in
+    List files for specified user, and if it has a keyword if logged in
 */
 
 cli
@@ -243,7 +324,7 @@ cli
         'command': 'getfiles'
       }
       writeJSON('gethash', userObj)
-      cli.log('ID |  Path')
+      cli.log('ID |  Path | Has Keyword')
       server.on('data', (d) => {
         cli.log(d.toString())
       })

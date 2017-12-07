@@ -107,7 +107,7 @@ public class FilesDao extends AbstractDao {
 		if(rs.next()) {
 			return rs.getRow();
 		}
-		return 0;
+		return -1;
 	}
 
 	/**
@@ -127,14 +127,19 @@ public class FilesDao extends AbstractDao {
 		if (rs.next()) {
 			id = rs.getInt("userid");
 		}
-		sql = "SELECT f.fileid, f.absolute_path FROM files f WHERE f.userid = ?";
+		sql = "SELECT f.fileid, f.absolute_path, k.keyword FROM files AS f LEFT JOIN keywords AS k ON k.fileid = f.fileid WHERE f.userid = ? GROUP BY f.fileid";
 		stmt = this.getConn().prepareStatement(sql);
 		stmt.setInt(1, id);
 		rs = stmt.executeQuery();
 		while (rs.next()) {
-			String[] temp = new String[2];
+			String[] temp = new String[3];
 			temp[0] = "" + rs.getInt("f.fileid");
 			temp[1] = rs.getString("f.absolute_path");
+			if (rs.getString("keyword") != null) {
+				temp[2] = "Y";
+			} else {
+				temp[2] = "N";
+			}
 			files.add(temp);
 		}
 		return files;
