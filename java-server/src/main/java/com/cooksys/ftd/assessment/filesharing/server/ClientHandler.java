@@ -121,10 +121,11 @@ public class ClientHandler implements Runnable {
 						// searchkeyword - searches for keywords attached to specific files
 
 						case "searchkeyword":
-							ArrayList<Integer> keys = new ArrayList<Integer>();
+							ArrayList<String[]> keys = new ArrayList<String[]>();
 							keys = keywordsDao.searchKeywords(m.getKeyword(), m.getUsername());
 							for (int i = 0; i < keys.size(); i++) {
-								this.writer.write(keys.get(i) + "\n");
+								String[] x = keys.get(i);
+								this.writer.write(x[0] + " - " + x[1] + "\n");
 								this.writer.flush();
 							}
 							break;
